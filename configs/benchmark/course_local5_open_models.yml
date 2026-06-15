@@ -1,0 +1,79 @@
+benchmark:
+  name: course_local5_open_models
+  macro_datasets: [ceilnet_table2, real20, postcard, objects, wild]
+  visualization_samples_per_dataset: 3
+  visualization_models:
+    [errnet_e0, errnet_e5b, ibcln_official, dsrnet_official, dsit_official, rdnet_official, r5_final]
+  paper_tables:
+    Open-Model Horizontal Comparison:
+      [errnet_e0, ibcln_official, dsrnet_official, dsit_official, rdnet_official, r5_final]
+    Course Baseline and Final Methods:
+      [errnet_e0, errnet_e5b, rdnet_official, r5_final]
+  paper_notes:
+    - Open-model pretrained weights use different training data; the table compares final-system performance.
+    - R5 uses low-pass reflection auxiliary supervision and additional scene-balanced RRW real pairs.
+  contributions:
+    - start: errnet_e0
+      end: errnet_e5b
+      label: ERRNet E0 -> ERRNet E5b
+    - start: rdnet_official
+      end: r5_final
+      label: RDNet official -> R5
+    - start: errnet_e0
+      end: r5_final
+      label: ERRNet E0 -> R5
+
+runtime:
+  xreflection_root: XReflection
+  cls_model: external/weights/cls_model.pth
+  focal_model: external/weights/focal.pth
+  dsrnet_root: external/models/DSRNet
+  dsit_root: external/models/DSIT
+  ibcln_root: external/models/IBCLN
+
+datasets:
+  ceilnet_table2:
+    root: external/datasets/course_local5/testdata_CEILNET_table2
+  real20:
+    root: external/datasets/course_local5/real20
+    max_long_edge: 512
+  postcard:
+    root: external/datasets/course_local5/postcard
+  objects:
+    root: external/datasets/course_local5/objects
+  wild:
+    root: external/datasets/course_local5/wild
+
+models:
+  errnet_e0:
+    label: ERRNet E0 baseline
+    adapter: errnet
+    checkpoint: external/weights/errnet_e0.pt
+  errnet_e5b:
+    label: ERRNet E5b-stage2
+    adapter: errnet
+    checkpoint: external/weights/errnet_e5b_stage2.pt
+  ibcln_official:
+    label: IBCLN official pretrained
+    adapter: ibcln
+    checkpoints:
+      transmission: external/weights/final_net_G_T.pth
+      reflection: external/weights/final_net_G_R.pth
+  dsrnet_official:
+    label: DSRNet official Setting II
+    adapter: dsrnet
+    checkpoint: external/weights/dsrnet_l_4000_epoch33.pt
+  dsit_official:
+    label: DSIT Large Setting II epoch 66
+    adapter: dsit
+    checkpoints:
+      model: external/weights/dist-large-setting2-epoch66.pth
+      backbone: external/weights/swin_large_o365_finetune.pth
+  rdnet_official:
+    label: RDNet official pretrained
+    adapter: rdnet
+    checkpoint: external/weights/rdnet-26.4849.ckpt
+  r5_final:
+    label: R5 low-pass auxiliary + RRW
+    adapter: rdnet
+    checkpoint: external/weights/rdnet_r5_final.ckpt

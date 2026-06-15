@@ -1,0 +1,46 @@
+# Python caches and build outputs
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+
+# Editors and local environments
+.vscode/
+.idea/
+.env
+.autoenv
+
+# Model weights and archives
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pb
+*.h5
+*.part
+*.zip
+
+# Training and evaluation outputs
+**/checkpoints/
+**/pretrained/
+**/experiments/
+**/results/
+**/result/
+**/runs/
+**/logs/
+**/outputs/
+**/wandb/
+**/lightning_logs/
+
+# External repositories, weights, and datasets
+external/
+RRW/
+ERRNet/datasets/raw_data/
+ERRNet/datasets/processed_data/
+XReflection/data/sirs/
+
+# Documentation build output
+docs/_build/

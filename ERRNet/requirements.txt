@@ -1,0 +1,8 @@
+matplotlib
+dominate
+scikit-image
+tensorboardX
+pyyaml
+h5py
+opencv-python-headless
+pillow

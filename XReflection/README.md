@@ -1,0 +1,134 @@
+# XReflection - An Easy-to-use Toolbox for Single-image Reflection Removal
+
+
+<div align="center"><img src="./docs/_static/XReflection_logo.png" alt="XReflection Logo" width="50%" height="50%"/></div>
+
+<!-- ---
+## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
+-->
+
+<br>
+
+XReflection is a neat toolbox tailored for single-image reflection removal(SIRR). We offer state-of-the-art SIRR solutions for training and inference, with a high-performance data pipeline, multi-GPU/TPU support, and more!
+
+
+---
+## 🏆 Award
+
+Equipped with XReflection, our team won the 1st place in the NTIRE 2025 Challenge on Single Image Reflection Removal in the Wild.
+
+<div align="center"><img src="docs/_static/NTIRE.png" alt="NTIRE 2025 Award" width="80%"/></div>
+
+<br>
+
+---
+## 📰 News and Updates
+- **[2025-10-26]** XReflection is now production-ready and have been applied to multiple research projects inside our team. DSIT is available in the model zoo. More models are on the way!
+- **[2025-07-16]** DSRNet is available in the model zoo. More models are on the way!
+- **[2025-05-26]** Release a training/testing pipeline. 
+
+---
+## 💡 Key Features
+
++ All-in-one intergration for the state-of-the-art SIRR solutions. We aim to create an out-of-the-box experience for SIRR research.
++ Multi-GPU/TPU support via PyTorchLightning. 
++ Pretrained model zoo.
++ Fast data synthesis pipeline.
+---
+## 📝 Introduction
+
+Please visit the [documentation](https://xreflection.readthedocs.io/en/latest/) for more features and usage.
+
+---
+
+## 🚀 Installation
+
+
+### Installation Commands
+```bash
+# Build from source
+git clone https://github.com/hainuo-wang/XReflection.git
+cd XReflection
+
+# Install dependencies
+pip install -r requirements.txt
+python setup.py develop
+```
+
+---
+
+## 📦 Getting Started
+
+### Testing a Pretrained Model
+```python
+python tools/train.py --config configs/train_config.yaml --test_only pretrained.ckpt
+```
+
+### Training a Model
+```bash
+python tools/train.py --config configs/train_config.yaml
+```
+
+### Resume Training
+#### from the last checkpoint
+```python
+python tools/train.py --config configs/train_config.yaml --resume
+```
+#### from the a specific checkpoint
+```python
+python tools/train.py --config configs/train_config.yaml --resume your_checkpoint_path.ckpt
+```
+
+### Data Preparation
+#### Training dataset
+* 7,643 images from the
+  [Pascal VOC dataset](http://host.robots.ox.ac.uk/pascal/VOC/), center-cropped as 224 x 224 slices to synthesize training pairs;
+* 90 real-world training pairs provided by [Zhang *et al.*](https://github.com/ceciliavision/perceptual-reflection-removal);
+* 200 real-world training pairs provided by [IBCLN](https://github.com/JHL-HUST/IBCLN).
+
+#### Testing dataset
+* 45 real-world testing images from [CEILNet dataset](https://github.com/fqnchina/CEILNet);
+* 20 real testing pairs provided by [Zhang *et al.*](https://github.com/ceciliavision/perceptual-reflection-removal);
+* 20 real testing pairs provided by [IBCLN](https://github.com/JHL-HUST/IBCLN);
+* 454 real testing pairs from [SIR^2 dataset](https://sir2data.github.io/), containing three subsets (i.e., Objects (200), Postcard (199), Wild (55)). 
+
+Download all in one from https://checkpoints.mingjia.li/sirs.zip
+
+---
+
+## 🌟 Features in Detail
+
+### Pretrained Model Zoo
+The performance of previous methods are improved with our new training pipeline.
+Access pretrained models for various SIRR algorithms. More are on the way.
+
+|Model| Link| PSNR(dB)|
+|---|---|---|
+|DSRNet|https://checkpoints.mingjia.li/dsr-25.8915.ckpt|25.8915|
+|DSIT|https://checkpoints.mingjia.li/dsit-26.6959.ckpt| 26.6959|
+|RDNet|https://checkpoints.mingjia.li/rdnet-26.4849.ckpt| 26.4849|
+<!-- ---
+
+## 📄 Citation
+
+If you find XReflection useful in your research or work, please consider citing:
+```bibtex
+@misc{xreflection2024,
+  title={XReflection: A Toolbox for Single-image Reflection Removal},
+  author={Your Name},
+  year={2024},
+  howpublished={\url{https://github.com/your-username/XReflection}}
+}
+``` -->
+
+---
+## 🙏 License and Acknowledgement
+
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE.md) file for details.
+The authors would express gratitude to the computational resource support from Google's TPU Research Cloud.
+
+
+
+
+
+
