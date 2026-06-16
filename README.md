@@ -1,4 +1,6 @@
 # Low-Pass Auxiliary Supervision for RDNet
+**The whole experiments of ERRNet**
+https://github.com/flyingc2004/ERRNet
 
 Course-project repository for single-image reflection removal. This repository
 combines the course ERRNet baseline, the XReflection/RDNet codebase, the final
