@@ -434,13 +434,13 @@ def write_reports(config: dict, output_dir: Path, image_rows: list[dict], datase
         },
         {
             "start": "rdnet_reproduced",
-            "end": "r4a_epoch40",
-            "label": "RDNet reproduced -> R4a epoch 40 (low-pass auxiliary supervision)",
+            "end": "r4",
+            "label": "RDNet reproduced -> R4 (low-pass auxiliary supervision)",
         },
         {
             "start": "errnet_e0",
-            "end": "r4a_epoch40",
-            "label": "ERRNet E0 -> R4a epoch 40 (overall improvement)",
+            "end": "r5_final",
+            "label": "ERRNet E0 -> R5 (overall improvement)",
         },
     ])
     text.extend(["## Contribution Decomposition", ""])

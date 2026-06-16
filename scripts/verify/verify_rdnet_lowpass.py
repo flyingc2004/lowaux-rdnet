@@ -6,6 +6,8 @@ from pathlib import Path
 import torch
 import yaml
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def assert_close(value: float, expected: float, tol: float, message: str) -> None:
     if abs(value - expected) > tol:
@@ -115,7 +117,7 @@ def main() -> None:
     parser.add_argument(
         "--xreflection-root",
         type=Path,
-        default=Path("/mnt/a/ljz/DIP/XReflection"),
+        default=REPO_ROOT / "XReflection",
     )
     parser.add_argument("--config", type=Path)
     args = parser.parse_args()

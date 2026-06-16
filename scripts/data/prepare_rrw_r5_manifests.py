@@ -5,6 +5,7 @@ import json
 import random
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 FIELDS = ("collection", "scene_id", "scene_dir", "target_path", "frame_count")
 IMAGE_EXTENSIONS = {".jpg", ".jpeg"}
@@ -86,11 +87,11 @@ def write_outputs(output_dir: Path, splits, summary):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rrw-root", type=Path, default=Path("/mnt/a/ljz/RRW"))
+    parser.add_argument("--rrw-root", type=Path, default=REPO_ROOT / "RRW")
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("/mnt/a/ljz/DIP/ERRNet/results/rdnet_data/r5_rrw"),
+        default=REPO_ROOT / "results" / "rdnet_data" / "r5_rrw",
     )
     parser.add_argument("--seed", type=int, default=20260611)
     parser.add_argument("--dry-run", action="store_true")

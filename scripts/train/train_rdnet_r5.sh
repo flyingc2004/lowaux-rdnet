@@ -14,8 +14,8 @@ python "${ROOT}/scripts/data/prepare_rrw_r5_manifests.py" \
 
 export XREFLECTION_ROOT RRW_ROOT
 export RRW_TRAIN_MANIFEST="${RRW_MANIFEST_DIR}/train.csv"
-export TRAIN_PIPELINE="r5a_rrw_only"
-export RUN_NAME="${RUN_NAME:-rdnet_r5a_rrw_only_from_r4a_e1}"
+export TRAIN_PIPELINE="r5_rrw_only"
+export RUN_NAME="${RUN_NAME:-rdnet_r5_rrw_only_from_r4_e1}"
 export PRETRAIN_NETWORK_G="${PRETRAIN_NETWORK_G:-${ROOT}/external/weights/rdnet_r4_epoch1.ckpt}"
 export MAX_EPOCHS="${MAX_EPOCHS:-40}"
 export PRECISION="bf16-mixed"

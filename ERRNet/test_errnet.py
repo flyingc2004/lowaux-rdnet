@@ -43,28 +43,28 @@ EVAL_DATASETS = {
     },
     "official_ceilnet_table2": {
         "dataset_name": "official_ceilnet_table2",
-        "path": "/mnt/a/ljz/DIP/ERRNet/datasets/processed_data/testdata_CEILNET_table2",
+        "path": "testdata_CEILNET_table2",
         "save_subdir": "official_ceilnet_table2",
     },
     "official_real20": {
         "dataset_name": "official_real20",
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/real20_420",
+        "path": "real20",
         "save_subdir": "official_real20",
         "max_long_edge": 512,
     },
     "official_sir2_objects": {
         "dataset_name": "official_sir2_objects",
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/SolidObjectDataset",
+        "path": "objects",
         "save_subdir": "official_sir2_objects",
     },
     "official_sir2_postcard": {
         "dataset_name": "official_sir2_postcard",
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/PostcardDataset",
+        "path": "postcard",
         "save_subdir": "official_sir2_postcard",
     },
     "official_sir2_wild": {
         "dataset_name": "official_sir2_wild",
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/WildSceneDataset",
+        "path": "wild",
         "save_subdir": "official_sir2_wild",
     },
 }

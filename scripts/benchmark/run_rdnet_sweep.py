@@ -15,6 +15,7 @@ from pathlib import Path
 
 DEFAULT_DATASETS = ["ceilnet_table2", "real20", "postcard", "objects", "wild"]
 METRICS = ["PSNR", "SSIM", "NCC", "LMSE"]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 EVAL_DATASETS = {
     "ceilnet_table2": {
         "path": "testdata_CEILNET_table2",
@@ -30,19 +31,20 @@ EVAL_DATASETS = {
         "path": "SIR2/PostcardDataset",
     },
     "official_ceilnet_table2": {
-        "path": "/mnt/a/ljz/DIP/ERRNet/datasets/processed_data/testdata_CEILNET_table2",
+        "path": "testdata_CEILNET_table2",
     },
     "official_real20": {
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/real20_420",
+        "path": "real20",
+        "max_long_edge": 512,
     },
     "official_sir2_objects": {
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/SolidObjectDataset",
+        "path": "objects",
     },
     "official_sir2_postcard": {
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/PostcardDataset",
+        "path": "postcard",
     },
     "official_sir2_wild": {
-        "path": "/mnt/a/ljz/DIP/XReflection/data/sirs/test/SIR2/WildSceneDataset",
+        "path": "wild",
     },
     "objects": {
         "path": "objects",
@@ -379,10 +381,10 @@ def main() -> None:
     parser.add_argument("checkpoints", nargs="*", help="RDNet Lightning checkpoints to evaluate.")
     parser.add_argument("--datasets", default=",".join(DEFAULT_DATASETS), help="Comma-separated test datasets.")
     parser.add_argument("--gpu-ids", default="4,5,6,7", help="Comma-separated physical CUDA device IDs.")
-    parser.add_argument("--data-root", default="datasets/processed_data", type=Path, help="ERRNet processed_data root.")
-    parser.add_argument("--xreflection-root", default="../XReflection", type=Path, help="XReflection repository root.")
-    parser.add_argument("--cls-model", default="../XReflection/pretrained/cls_model.pth", type=Path, help="RDNet cls_model.pth.")
-    parser.add_argument("--focal-model", default="../XReflection/pretrained/focal.pth", type=Path, help="RDNet focal.pth.")
+    parser.add_argument("--data-root", default="external/datasets/course_local5", type=Path, help="course-local-five dataset root.")
+    parser.add_argument("--xreflection-root", default="XReflection", type=Path, help="XReflection repository root.")
+    parser.add_argument("--cls-model", default="external/weights/cls_model.pth", type=Path, help="RDNet cls_model.pth.")
+    parser.add_argument("--focal-model", default="external/weights/focal.pth", type=Path, help="RDNet focal.pth.")
     parser.add_argument("--output-dir", default=None, help="Output directory. Defaults to results/rdnet_sweep/<timestamp>.")
     parser.add_argument("--resume", action="store_true", help="Skip checkpoint/dataset pairs already present in output-dir/metrics.csv.")
     parser.add_argument("--max-samples", type=int, default=None, help="Limit images per dataset for smoke tests.")
@@ -393,7 +395,7 @@ def main() -> None:
     parser.add_argument("--row-json", default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    root = Path(args.root).resolve() if args.root else Path(__file__).resolve().parent
+    root = Path(args.root).resolve() if args.root else REPO_ROOT
     if not args.data_root.is_absolute():
         args.data_root = (root / args.data_root).resolve()
     if not args.xreflection_root.is_absolute():

@@ -13,7 +13,8 @@ from public_benchmark.adapters import build_adapter
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_CONFIG = ROOT / "public_benchmark" / "course_local5_open_models.yml"
+REPO_ROOT = ROOT.parents[1]
+DEFAULT_CONFIG = REPO_ROOT / "configs" / "benchmark" / "course_local5_open_models.yml"
 
 
 def verify_worker(config_path: Path, model_name: str) -> None:

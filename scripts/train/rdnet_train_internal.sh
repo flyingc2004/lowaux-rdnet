@@ -80,9 +80,10 @@ require_path "${SYN_TRAIN_DIR}" "synthetic VOC training dataset"
 if [[ -n "${SYN_FNS}" ]]; then
   require_path "${SYN_FNS}" "synthetic filename list"
 fi
-if [[ "${TRAIN_PIPELINE}" == "r5a_rrw_only" ]]; then
-  require_path "${RRW_ROOT}" "R5a RRW root"
-  require_path "${RRW_TRAIN_MANIFEST}" "R5a RRW train manifest"
+# r5a_rrw_only is accepted only as a backward-compatible alias for old local configs.
+if [[ "${TRAIN_PIPELINE}" == "r5_rrw_only" || "${TRAIN_PIPELINE}" == "r5a_rrw_only" ]]; then
+  require_path "${RRW_ROOT}" "R5 RRW root"
+  require_path "${RRW_TRAIN_MANIFEST}" "R5 RRW train manifest"
 elif [[ "${TRAIN_PIPELINE}" != "default" ]]; then
   printf 'Unsupported TRAIN_PIPELINE: %s\n' "${TRAIN_PIPELINE}" >&2
   exit 1
@@ -136,7 +137,8 @@ cfg.setdefault("val", {})["save_img"] = os.environ["SAVE_VAL_IMAGES"] == "1"
 train = cfg["datasets"]["train"]
 train["num_worker_per_gpu"] = int(os.environ["NUM_WORKERS"])
 train["batch_size_per_gpu"] = int(os.environ["BATCH_SIZE"])
-if os.environ["TRAIN_PIPELINE"] == "r5a_rrw_only":
+# r5a_rrw_only is accepted only as a backward-compatible alias for old local configs.
+if os.environ["TRAIN_PIPELINE"] in {"r5_rrw_only", "r5a_rrw_only"}:
     train["size"] = 7932
     train["fused_datasets"] = [
         {
