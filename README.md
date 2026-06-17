@@ -57,7 +57,7 @@ as the main supervision and adds a symmetric low-pass auxiliary term:
 ```text
 L_low^R = MSE(G_sigma(R_hat), G_sigma(R_res))
 ```
-![alt text](results/vis/RDNet-R4.png)
+![alt text](RDNet-R4.png)
 
 where `G_sigma` is a normalized depth-wise Gaussian blur with kernel `31` and
 sigma `5.0`. The auxiliary term is used only during training and does not add
