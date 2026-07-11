@@ -1,0 +1,51 @@
+benchmark:
+  name: course_local5_r5_lambda0p8_epoch28
+  macro_datasets: [ceilnet_table2, real20, postcard, objects, wild]
+  visualization_samples_per_dataset: 3
+  visualization_models:
+    [rdnet_official, r5_lambda0p2_epoch34, r5_lambda0p8_epoch28]
+  paper_tables:
+    R5 Lambda Comparison:
+      [rdnet_official, r4_lambda0p8_full40, r5_lambda0p2_epoch34, r5_lambda0p8_epoch28]
+  paper_notes:
+    - R5 lambda_low=0.8 is initialized from RDNet official and trained with RRW scene-balanced pairs.
+    - R5 lambda_low=0.2 epoch34 is the previous R5 reference checkpoint.
+
+runtime:
+  xreflection_root: /mnt/a/ljz/DIP/lowaux-rdnet/XReflection
+  cls_model: /mnt/a/ljz/DIP/XReflection/pretrained/cls_model.pth
+  focal_model: /mnt/a/ljz/DIP/XReflection/pretrained/focal.pth
+  dsrnet_root: null
+  dsit_root: null
+  ibcln_root: null
+
+datasets:
+  ceilnet_table2:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/testdata_CEILNET_table2
+  real20:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/real20
+    max_long_edge: 512
+  postcard:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/postcard
+  objects:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/objects
+  wild:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/wild
+
+models:
+  rdnet_official:
+    label: RDNet official pretrained
+    adapter: rdnet
+    checkpoint: /mnt/a/ljz/DIP/XReflection/pretrained/rdnet-26.4849.ckpt
+  r4_lambda0p8_full40:
+    label: R4 lambda_low=0.8 full40
+    adapter: rdnet
+    checkpoint: /mnt/a/ljz/DIP/lowaux-rdnet/XReflection/experiments/rdnet_r4_lowlambda_0p8_full40_ddp4/checkpoints/epoch=39-step=39640-metrics/average/psnr=26.6014.ckpt
+  r5_lambda0p2_epoch34:
+    label: R5 lambda_low=0.2 epoch34
+    adapter: rdnet
+    checkpoint: /mnt/a/ljz/DIP/XReflection/experiments/rdnet_r5a_rrw_only_from_r4a_e1/checkpoints/epoch=34-step=34685-metrics/average/psnr=27.4339.ckpt
+  r5_lambda0p8_epoch28:
+    label: R5 lambda_low=0.8 epoch28
+    adapter: rdnet
+    checkpoint: /mnt/a/ljz/DIP/lowaux-rdnet/XReflection/experiments/rdnet_r5_rrw_lambda0p8_from_official_static_b2_noaccum/checkpoints/epoch=28-step=28739-metrics/average/psnr=27.4140.ckpt

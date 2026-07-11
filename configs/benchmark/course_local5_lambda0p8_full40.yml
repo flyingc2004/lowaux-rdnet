@@ -1,0 +1,37 @@
+benchmark:
+  name: course_local5_lambda0p8_full40
+  macro_datasets: [ceilnet_table2, real20, postcard, objects, wild]
+  visualization_samples_per_dataset: 3
+  visualization_models: [r4_lambda0p8_full40]
+  paper_tables:
+    Lambda Low 0.8 Full40:
+      [r4_lambda0p8_full40]
+  paper_notes:
+    - This run evaluates the lambda_low=0.8 R4 full-epoch checkpoint with the unified public benchmark.
+
+runtime:
+  xreflection_root: /mnt/a/ljz/DIP/lowaux-rdnet/XReflection
+  cls_model: /mnt/a/ljz/DIP/XReflection/pretrained/cls_model.pth
+  focal_model: /mnt/a/ljz/DIP/XReflection/pretrained/focal.pth
+  dsrnet_root: null
+  dsit_root: null
+  ibcln_root: null
+
+datasets:
+  ceilnet_table2:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/testdata_CEILNET_table2
+  real20:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/real20
+    max_long_edge: 512
+  postcard:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/postcard
+  objects:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/objects
+  wild:
+    root: /mnt/a/ljz/DIP/ERRNet/datasets/processed_data/wild
+
+models:
+  r4_lambda0p8_full40:
+    label: R4 lambda_low=0.8 full40
+    adapter: rdnet
+    checkpoint: /mnt/a/ljz/DIP/lowaux-rdnet/XReflection/experiments/rdnet_r4_lowlambda_0p8_full40_ddp4/checkpoints/epoch=39-step=39640-metrics/average/psnr=26.6014.ckpt
