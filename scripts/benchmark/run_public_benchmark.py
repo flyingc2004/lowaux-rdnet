@@ -17,6 +17,11 @@ os.environ["MPLCONFIGDIR"] = "/tmp/ljz-public-benchmark-mpl"
 import yaml
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+ERRNET_ROOT = REPO_ROOT / "ERRNet"
+if ERRNET_ROOT.is_dir():
+    sys.path.insert(0, str(ERRNET_ROOT))
+
 METRICS = ["PSNR", "SSIM", "NCC", "LMSE"]
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".ppm"}
 
@@ -188,6 +193,8 @@ def evaluate_model(args, config: dict, model_name: str, pair_map: dict[str, list
         expected_metadata["checkpoint"] = resolved_spec["checkpoint"]
     else:
         expected_metadata["checkpoints"] = resolved_spec["checkpoints"]
+    if "network_g" in resolved_spec:
+        expected_metadata["network_g"] = resolved_spec["network_g"]
     if args.resume and metadata_path.exists():
         existing_metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         if existing_metadata != expected_metadata:

@@ -26,6 +26,9 @@ the explicit residual branch with:
 Model weights, datasets, experiment logs, benchmark outputs, and third-party
 model repositories are intentionally excluded from Git.
 
+For the optional R6 DINO semantic prompt experiment, see
+[README_R6_DINO_PROMPT.md](README_R6_DINO_PROMPT.md).
+
 ## Repository Layout
 
 ```text

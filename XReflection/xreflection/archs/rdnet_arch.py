@@ -6,6 +6,7 @@
 # --------------------------------------------------------
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
 from xreflection.utils.registry import ARCH_REGISTRY
 from xreflection.archs.rdnet.classifier import PretrainedConvNext
@@ -149,6 +150,88 @@ class StarReLU(nn.Module):
         return self.scale * self.relu(x) ** 2 + self.bias
 
 
+class DinoPrompt(nn.Module):
+    def __init__(
+        self,
+        model_path,
+        prompt_dim=64,
+        input_size=224,
+        adapter_hidden_dim=256,
+        strength=0.1,
+        normalize_features=True,
+    ):
+        super().__init__()
+        try:
+            from transformers import AutoModel
+        except ImportError as exc:
+            raise ImportError(
+                "DINO prompt requires transformers. Install it in the xreflection "
+                "environment or disable network_g.dino_prompt.enable."
+            ) from exc
+
+        import os
+
+        dino_model = AutoModel.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+            local_files_only=os.path.isdir(str(model_path)),
+        )
+        for param in dino_model.parameters():
+            param.requires_grad = False
+        dino_model.eval()
+        object.__setattr__(self, "_dino_model", dino_model)
+        self.model_path = str(model_path)
+
+        self.input_size = int(input_size)
+        self.strength = float(strength)
+        self.normalize_features = bool(normalize_features)
+        self.num_register_tokens = int(getattr(self._dino_model.config, "num_register_tokens", 0))
+        feature_dim = int(getattr(self._dino_model.config, "hidden_size"))
+        self.adapter = nn.Sequential(
+            nn.LayerNorm(feature_dim),
+            nn.Linear(feature_dim, int(adapter_hidden_dim)),
+            nn.GELU(),
+            nn.Linear(int(adapter_hidden_dim), int(prompt_dim)),
+        )
+        nn.init.zeros_(self.adapter[-1].weight)
+        nn.init.zeros_(self.adapter[-1].bias)
+        self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
+        self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
+
+    def train(self, mode=True):
+        super().train(mode)
+        self._dino_model.eval()
+        return self
+
+    def forward(self, x, prompt_base):
+        model_device = next(self._dino_model.parameters()).device
+        if model_device != x.device:
+            self._dino_model.to(x.device)
+        self._dino_model.eval()
+        dino_input = F.interpolate(
+            x.float(),
+            size=(self.input_size, self.input_size),
+            mode="bilinear",
+            align_corners=False,
+        )
+        dino_input = (dino_input - self.mean.float()) / self.std.float()
+        with torch.no_grad():
+            outputs = self._dino_model(
+                pixel_values=dino_input,
+                output_hidden_states=False,
+                return_dict=True,
+            )
+            tokens = outputs.last_hidden_state
+            patch_tokens = tokens[:, 1 + self.num_register_tokens:, :]
+            pooled = patch_tokens.mean(dim=1)
+            if self.normalize_features:
+                pooled = F.layer_norm(pooled, pooled.shape[-1:])
+
+        delta = self.adapter(pooled.to(prompt_base.device))
+        delta = delta.to(dtype=prompt_base.dtype)
+        return prompt_base * (1.0 + self.strength * torch.tanh(delta))
+
+
 @ARCH_REGISTRY.register()
 class RDNet(nn.Module):
     def __init__(self, channels=[64, 128, 256, 512], layers=[2, 3, 6, 3], num_subnet=5, loss_col=4, kernel_size=3,
@@ -157,6 +240,7 @@ class RDNet(nn.Module):
                  inter_supv=True, head_init_scale=None,
                  pretrained_cols=16,
                  pretrained_models=None,
+                 dino_prompt=None,
                  ) -> None:
         super().__init__()
 
@@ -180,6 +264,18 @@ class RDNet(nn.Module):
                                   nn.Linear(in_features=512,out_features=64),
                                   StarReLU(),
                                   )
+        self.dino_prompt = None
+        dino_prompt = dino_prompt or {}
+        if dino_prompt.get("enable", False):
+            self.dino_prompt = DinoPrompt(
+                model_path=dino_prompt["model_path"],
+                prompt_dim=dino_prompt.get("prompt_dim", 64),
+                input_size=dino_prompt.get("input_size", 224),
+                adapter_hidden_dim=dino_prompt.get("adapter_hidden_dim", 256),
+                strength=dino_prompt.get("strength", 0.1),
+                normalize_features=dino_prompt.get("normalize_features", True),
+            )
+        pretrained_models = dict(pretrained_models or {})
         pretrained_cls_path = pretrained_models.pop('cls_model', None)
         pretrained_base_network_path = pretrained_models.pop('base_network', None)
 
@@ -244,6 +340,8 @@ class RDNet(nn.Module):
             self.classifier.eval()
             alpha = self.classifier(x_in)
         prompt_alpha = self.prompt(alpha)
+        if self.dino_prompt is not None:
+            prompt_alpha = self.dino_prompt(x_in, prompt_alpha)
         prompt_alpha = prompt_alpha.unsqueeze(-1).unsqueeze(-1)
         x = prompt_alpha * x_stem
         for i in range(self.num_subnet):
@@ -265,7 +363,10 @@ class RDNet(nn.Module):
 
     def get_other_params(self):
         # get all params except for the baseball
-        return list(self.prompt.parameters()) + list(self.decoder_blocks.parameters()) + \
+        dino_prompt_params = [
+            param for param in self.dino_prompt.parameters() if param.requires_grad
+        ] if self.dino_prompt is not None else []
+        return list(self.prompt.parameters()) + dino_prompt_params + list(self.decoder_blocks.parameters()) + \
             list(self.subnet0.parameters()) + list(self.subnet1.parameters()) + list(self.subnet2.parameters()) + list(
                 self.subnet3.parameters()) + \
             list(self.baseball_adapter.parameters())
@@ -284,4 +385,3 @@ if __name__ == '__main__':
     torch.cuda.synchronize(device)
     out = model(inp)
     print(out[1][0].shape)
-

@@ -184,7 +184,22 @@ class BaseModel(L.LightningModule):
 
         # Load to model
         self._print_different_keys_loading(self.net_g, weights, strict_load)
-        self.net_g.load_state_dict(weights, strict=strict_load)
+        incompatible = self.net_g.load_state_dict(weights, strict=strict_load)
+        if not strict_load:
+            allowed_missing_prefixes = tuple(self.opt['path'].get('allowed_missing_key_prefixes_g', []))
+            allowed_unexpected_prefixes = tuple(self.opt['path'].get('allowed_unexpected_key_prefixes_g', []))
+            disallowed_missing = [
+                key for key in incompatible.missing_keys
+                if not allowed_missing_prefixes or not key.startswith(allowed_missing_prefixes)
+            ]
+            disallowed_unexpected = [
+                key for key in incompatible.unexpected_keys
+                if not allowed_unexpected_prefixes or not key.startswith(allowed_unexpected_prefixes)
+            ]
+            if allowed_missing_prefixes and disallowed_missing:
+                raise RuntimeError(f"Unexpected missing keys while loading {load_path}: {disallowed_missing}")
+            if allowed_unexpected_prefixes and disallowed_unexpected:
+                raise RuntimeError(f"Unexpected checkpoint keys while loading {load_path}: {disallowed_unexpected}")
 
     @rank_zero_only
     def _print_different_keys_loading(self, crt_net, load_net, strict=True):

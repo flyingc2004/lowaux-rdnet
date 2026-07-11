@@ -3,9 +3,25 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${ROOT}"
+PARENT_ROOT="$(cd "${ROOT}/.." && pwd)"
+GRANDPARENT_ROOT="$(cd "${ROOT}/../.." && pwd)"
+
+first_existing_path() {
+  local candidate
+  for candidate in "$@"; do
+    if [[ -e "${candidate}" ]]; then
+      printf '%s' "${candidate}"
+      return
+    fi
+  done
+  printf '%s' "$1"
+}
 
 XREFLECTION_ROOT="${XREFLECTION_ROOT:-${ROOT}/XReflection}"
-RRW_ROOT="${RRW_ROOT:-${ROOT}/RRW}"
+RRW_ROOT="${RRW_ROOT:-$(first_existing_path \
+  "${ROOT}/RRW" \
+  "${PARENT_ROOT}/RRW" \
+  "${GRANDPARENT_ROOT}/RRW")}"
 RRW_MANIFEST_DIR="${RRW_MANIFEST_DIR:-${ROOT}/results/rdnet_data/r5_rrw}"
 
 python "${ROOT}/scripts/data/prepare_rrw_r5_manifests.py" \
@@ -13,6 +29,20 @@ python "${ROOT}/scripts/data/prepare_rrw_r5_manifests.py" \
   --output-dir "${RRW_MANIFEST_DIR}"
 
 export XREFLECTION_ROOT RRW_ROOT
+export SIRS_ROOT="${SIRS_ROOT:-$(first_existing_path \
+  "${ROOT}/XReflection/data/sirs" \
+  "${PARENT_ROOT}/XReflection/data/sirs")}"
+export ERRNET_DATA_ROOT="${ERRNET_DATA_ROOT:-$(first_existing_path \
+  "${ROOT}/ERRNet/datasets/processed_data" \
+  "${PARENT_ROOT}/ERRNet/datasets/processed_data")}"
+export CLS_MODEL="${CLS_MODEL:-$(first_existing_path \
+  "${ROOT}/XReflection/pretrained/cls_model.pth" \
+  "${ROOT}/external/weights/cls_model.pth" \
+  "${PARENT_ROOT}/XReflection/pretrained/cls_model.pth")}"
+export FOCAL_MODEL="${FOCAL_MODEL:-$(first_existing_path \
+  "${ROOT}/XReflection/pretrained/focal.pth" \
+  "${ROOT}/external/weights/focal.pth" \
+  "${PARENT_ROOT}/XReflection/pretrained/focal.pth")}"
 export RRW_TRAIN_MANIFEST="${RRW_MANIFEST_DIR}/train.csv"
 export TRAIN_PIPELINE="r5_rrw_only"
 export RUN_NAME="${RUN_NAME:-rdnet_r5_rrw_only_from_r4_e1}"
@@ -22,7 +52,7 @@ export PRECISION="bf16-mixed"
 export REFLECTION_TARGET_MODE="residual_lowpass_aux"
 export REFLECTION_LOWPASS_KERNEL="31"
 export REFLECTION_LOWPASS_SIGMA="5.0"
-export REFLECTION_LOWPASS_AUX_WEIGHT="0.2"
+export REFLECTION_LOWPASS_AUX_WEIGHT="${REFLECTION_LOWPASS_AUX_WEIGHT:-0.2}"
 export BASEBALL_LR="5e-6"
 export OTHER_LR="1e-5"
 export SAVE_TOP_K="${SAVE_TOP_K:-3}"

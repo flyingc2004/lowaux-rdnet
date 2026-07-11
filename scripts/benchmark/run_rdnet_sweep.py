@@ -153,7 +153,23 @@ def extract_state_dict(checkpoint):
     return checkpoint
 
 
-def load_rdnet_network(xreflection_root: Path, checkpoint: Path, cls_model: Path, focal_model: Path, device):
+def deep_update(base: dict, override: dict) -> dict:
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_update(base[key], value)
+        else:
+            base[key] = deepcopy(value)
+    return base
+
+
+def load_rdnet_network(
+    xreflection_root: Path,
+    checkpoint: Path,
+    cls_model: Path,
+    focal_model: Path,
+    device,
+    network_g: dict | None = None,
+):
     import torch
     import yaml
 
@@ -163,6 +179,8 @@ def load_rdnet_network(xreflection_root: Path, checkpoint: Path, cls_model: Path
     with (xreflection_root / "options" / "train_rdnet.yml").open("r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     network_opt = deepcopy(cfg["network_g"])
+    if network_g:
+        deep_update(network_opt, network_g)
     network_opt["pretrained_models"]["cls_model"] = str(cls_model)
     network_opt["pretrained_models"]["base_network"] = str(focal_model)
 

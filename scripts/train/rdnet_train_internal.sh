@@ -18,6 +18,7 @@ DDP_TIMEOUT_SECONDS="${DDP_TIMEOUT_SECONDS:-7200}"
 VAL_CHECK_INTERVAL="${VAL_CHECK_INTERVAL:-1.0}"
 LOG_EVERY_N_STEPS="${LOG_EVERY_N_STEPS:-50}"
 SAVE_TOP_K="${SAVE_TOP_K:-3}"
+SAVE_LAST="${SAVE_LAST:-1}"
 NUM_SANITY_VAL_STEPS="${NUM_SANITY_VAL_STEPS:-0}"
 SAVE_VAL_IMAGES="${SAVE_VAL_IMAGES:-0}"
 LIMIT_TRAIN_BATCHES="${LIMIT_TRAIN_BATCHES:-1.0}"
@@ -28,9 +29,9 @@ NCCL_ASYNC_ERROR_HANDLING="${NCCL_ASYNC_ERROR_HANDLING:-1}"
 TORCH_NCCL_ASYNC_ERROR_HANDLING="${TORCH_NCCL_ASYNC_ERROR_HANDLING:-1}"
 NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
 NCCL_P2P_DISABLE="${NCCL_P2P_DISABLE:-0}"
-RDNET_TMPDIR="${RDNET_TMPDIR:-/tmp/ljz-rdnet}"
-RDNET_MPLCONFIGDIR="${RDNET_MPLCONFIGDIR:-/tmp/ljz-rdnet-mpl}"
-RDNET_TORCH_HOME="${RDNET_TORCH_HOME:-/tmp/ljz-torch-cache}"
+RDNET_TMPDIR="${RDNET_TMPDIR:-/mnt/a/ljz/.tmp/lowaux-rdnet/tmp}"
+RDNET_MPLCONFIGDIR="${RDNET_MPLCONFIGDIR:-/mnt/a/ljz/.tmp/lowaux-rdnet/matplotlib}"
+RDNET_TORCH_HOME="${RDNET_TORCH_HOME:-/mnt/a/ljz/.tmp/lowaux-rdnet/torch-cache}"
 DRY_RUN="${DRY_RUN:-0}"
 TRAIN_PIPELINE="${TRAIN_PIPELINE:-default}"
 
@@ -56,6 +57,12 @@ REFLECTION_LOWPASS_AUX_WEIGHT="${REFLECTION_LOWPASS_AUX_WEIGHT:-0.0}"
 BASEBALL_LR="${BASEBALL_LR:-1e-4}"
 OTHER_LR="${OTHER_LR:-2e-4}"
 RESUME="${RESUME:-}"
+DINO_PROMPT_ENABLE="${DINO_PROMPT_ENABLE:-0}"
+DINO_MODEL_PATH="${DINO_MODEL_PATH:-}"
+DINO_PROMPT_INPUT_SIZE="${DINO_PROMPT_INPUT_SIZE:-224}"
+DINO_PROMPT_STRENGTH="${DINO_PROMPT_STRENGTH:-0.1}"
+DINO_PROMPT_ADAPTER_HIDDEN_DIM="${DINO_PROMPT_ADAPTER_HIDDEN_DIM:-256}"
+DINO_PROMPT_NORMALIZE_FEATURES="${DINO_PROMPT_NORMALIZE_FEATURES:-1}"
 
 IFS=',' read -r -a gpu_array <<< "${GPU_IDS}"
 NUM_DEVICES="${#gpu_array[@]}"
@@ -93,17 +100,29 @@ require_path "${FOCAL_MODEL}" "focal checkpoint"
 if [[ -n "${PRETRAIN_NETWORK_G}" ]]; then
   require_path "${PRETRAIN_NETWORK_G}" "RDNet initial checkpoint"
 fi
+if [[ "${DINO_PROMPT_ENABLE}" == "1" ]]; then
+  if [[ -z "${DINO_MODEL_PATH}" ]]; then
+    printf 'DINO_MODEL_PATH must be set when DINO_PROMPT_ENABLE=1\n' >&2
+    exit 1
+  fi
+  if [[ "${DINO_MODEL_PATH}" = /* && ! -e "${DINO_MODEL_PATH}" ]]; then
+    require_path "${DINO_MODEL_PATH}" "DINO model path"
+  fi
+fi
 
 mkdir -p "${CONFIG_DIR}" "${RDNET_TMPDIR}" "${RDNET_MPLCONFIGDIR}" "${RDNET_TORCH_HOME}"
 
 export XREFLECTION_ROOT RUN_NAME MAX_EPOCHS BATCH_SIZE ACCUMULATE_GRAD_BATCHES NUM_WORKERS PRECISION STRATEGY
 export DDP_TIMEOUT_SECONDS SAVE_VAL_IMAGES LIMIT_TRAIN_BATCHES LIMIT_VAL_BATCHES
 export VAL_CHECK_INTERVAL LOG_EVERY_N_STEPS SAVE_TOP_K SIRS_ROOT ERRNET_DATA_ROOT
+export SAVE_LAST
 export EXPERIMENTS_ROOT CONFIG_PATH REAL_TRAIN_DIR NATURE_TRAIN_DIR SYN_TRAIN_DIR SYN_FNS
 export TRAIN_PIPELINE RRW_ROOT RRW_TRAIN_MANIFEST
 export CLS_MODEL FOCAL_MODEL PRETRAIN_NETWORK_G NUM_DEVICES NUM_SANITY_VAL_STEPS
 export REFLECTION_TARGET_MODE REFLECTION_LOWPASS_KERNEL REFLECTION_LOWPASS_SIGMA REFLECTION_LOWPASS_AUX_WEIGHT
 export BASEBALL_LR OTHER_LR
+export DINO_PROMPT_ENABLE DINO_MODEL_PATH DINO_PROMPT_INPUT_SIZE DINO_PROMPT_STRENGTH
+export DINO_PROMPT_ADAPTER_HIDDEN_DIM DINO_PROMPT_NORMALIZE_FEATURES
 
 python - <<'PY'
 import os
@@ -129,6 +148,7 @@ cfg["lightning"]["num_sanity_val_steps"] = int(os.environ["NUM_SANITY_VAL_STEPS"
 cfg["lightning"]["limit_train_batches"] = float(os.environ["LIMIT_TRAIN_BATCHES"])
 cfg["lightning"]["limit_val_batches"] = float(os.environ["LIMIT_VAL_BATCHES"])
 cfg["checkpoint"]["save_top_k"] = int(os.environ["SAVE_TOP_K"])
+cfg["checkpoint"]["save_last"] = os.environ["SAVE_LAST"] == "1"
 cfg["path"]["experiments_root"] = os.environ["EXPERIMENTS_ROOT"]
 if os.environ["PRETRAIN_NETWORK_G"]:
     cfg["path"]["pretrain_network_g"] = os.environ["PRETRAIN_NETWORK_G"]
@@ -198,6 +218,32 @@ for val in cfg["datasets"]["val_datasets"]:
 cfg["network_g"]["pretrained_models"]["cls_model"] = os.environ["CLS_MODEL"]
 cfg["network_g"]["pretrained_models"]["base_network"] = os.environ["FOCAL_MODEL"]
 cfg["logger"]["wandb"]["enable"] = False
+
+dino_prompt_enable = os.environ["DINO_PROMPT_ENABLE"] == "1"
+if dino_prompt_enable:
+    dino_input_size = int(os.environ["DINO_PROMPT_INPUT_SIZE"])
+    dino_strength = float(os.environ["DINO_PROMPT_STRENGTH"])
+    dino_adapter_hidden_dim = int(os.environ["DINO_PROMPT_ADAPTER_HIDDEN_DIM"])
+    if dino_input_size <= 0:
+        raise ValueError("DINO_PROMPT_INPUT_SIZE must be positive")
+    if dino_strength < 0:
+        raise ValueError("DINO_PROMPT_STRENGTH must be non-negative")
+    if dino_adapter_hidden_dim <= 0:
+        raise ValueError("DINO_PROMPT_ADAPTER_HIDDEN_DIM must be positive")
+    cfg["network_g"]["dino_prompt"] = {
+        "enable": True,
+        "model_path": os.environ["DINO_MODEL_PATH"],
+        "input_size": dino_input_size,
+        "prompt_dim": 64,
+        "adapter_hidden_dim": dino_adapter_hidden_dim,
+        "strength": dino_strength,
+        "normalize_features": os.environ["DINO_PROMPT_NORMALIZE_FEATURES"] == "1",
+    }
+    if os.environ["PRETRAIN_NETWORK_G"]:
+        cfg["path"]["strict_load_g"] = False
+        cfg["path"]["allowed_missing_key_prefixes_g"] = ["dino_prompt."]
+else:
+    cfg["network_g"].pop("dino_prompt", None)
 
 reflection_target_mode = os.environ["REFLECTION_TARGET_MODE"]
 reflection_lowpass_kernel = int(os.environ["REFLECTION_LOWPASS_KERNEL"])

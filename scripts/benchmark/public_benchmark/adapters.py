@@ -153,6 +153,7 @@ class RDNetAdapter(ModelAdapter):
     behavior = {
         "input": "shared RGB float32 [0,1]",
         "model_padding": "replicate pad right/bottom to a multiple of 32",
+        "optional_prompt": "model config may enable frozen DINO semantic prompt before RDNet inference",
         "output_alignment": "remove model padding and return input size",
     }
 
@@ -163,6 +164,7 @@ class RDNetAdapter(ModelAdapter):
         xreflection_root: Path,
         cls_model: Path,
         focal_model: Path,
+        network_g: dict | None = None,
     ):
         from run_rdnet_sweep import load_rdnet_network
 
@@ -172,6 +174,7 @@ class RDNetAdapter(ModelAdapter):
             cls_model=cls_model,
             focal_model=focal_model,
             device=device,
+            network_g=network_g,
         )
         self.device = device
 
@@ -330,6 +333,7 @@ def build_adapter(model_spec: dict, device: torch.device, runtime: dict) -> Mode
             xreflection_root=Path(runtime["xreflection_root"]).resolve(),
             cls_model=Path(runtime["cls_model"]).resolve(),
             focal_model=Path(runtime["focal_model"]).resolve(),
+            network_g=model_spec.get("network_g"),
         )
     if adapter_type == "dsrnet":
         return DSRNetAdapter(

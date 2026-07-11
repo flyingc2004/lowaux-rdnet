@@ -1,0 +1,62 @@
+benchmark:
+  name: course_local5_r6_dino_prompt
+  macro_datasets: [ceilnet_table2, real20, postcard, objects, wild]
+  visualization_samples_per_dataset: 3
+  visualization_models: [rdnet_official, r5_final, r6_dino_prompt]
+  paper_tables:
+    R6 DINO Prompt Study:
+      [rdnet_official, r5_final, r6_dino_prompt]
+  paper_notes:
+    - R6 keeps the R5 low-pass auxiliary loss and RRW training data, and adds a frozen DINO semantic prompt.
+    - Replace r6_dino_prompt checkpoint and network_g.dino_prompt.model_path with local files before full evaluation.
+  contributions:
+    - start: rdnet_official
+      end: r5_final
+      label: RDNet official -> R5
+    - start: r5_final
+      end: r6_dino_prompt
+      label: R5 -> R6 DINO prompt
+
+runtime:
+  xreflection_root: XReflection
+  cls_model: external/weights/cls_model.pth
+  focal_model: external/weights/focal.pth
+  dsrnet_root: external/models/DSRNet
+  dsit_root: external/models/DSIT
+  ibcln_root: external/models/IBCLN
+
+datasets:
+  ceilnet_table2:
+    root: external/datasets/course_local5/testdata_CEILNET_table2
+  real20:
+    root: external/datasets/course_local5/real20
+    max_long_edge: 512
+  postcard:
+    root: external/datasets/course_local5/postcard
+  objects:
+    root: external/datasets/course_local5/objects
+  wild:
+    root: external/datasets/course_local5/wild
+
+models:
+  rdnet_official:
+    label: RDNet official pretrained
+    adapter: rdnet
+    checkpoint: external/weights/rdnet-26.4849.ckpt
+  r5_final:
+    label: R5 low-pass auxiliary + RRW
+    adapter: rdnet
+    checkpoint: external/weights/rdnet_r5_final.ckpt
+  r6_dino_prompt:
+    label: R6 DINO semantic prompt
+    adapter: rdnet
+    checkpoint: external/weights/rdnet_r6_dino_prompt.ckpt
+    network_g:
+      dino_prompt:
+        enable: true
+        model_path: external/models/dinov3
+        input_size: 224
+        prompt_dim: 64
+        adapter_hidden_dim: 256
+        strength: 0.1
+        normalize_features: true
