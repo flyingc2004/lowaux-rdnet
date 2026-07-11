@@ -34,7 +34,51 @@ XReflection/pretrained/cls_model.pth
 XReflection/pretrained/focal.pth
 ```
 
-For the ModelScope DINOv3 ViT-L/16 model used in local experiments:
+## Download DINOv3 from ModelScope
+
+If the current terminal inherits a local proxy but the server itself can reach
+ModelScope, clear proxy variables first:
+
+```bash
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+unset all_proxy ALL_PROXY no_proxy NO_PROXY
+unset ftp_proxy FTP_PROXY
+env | grep -i proxy || echo "proxy env cleared"
+```
+
+Install the required Python packages in the `xreflection` environment:
+
+```bash
+cd /mnt/a/ljz/DIP/lowaux-rdnet
+
+mkdir -p /mnt/a/ljz/.tmp/lowaux-rdnet/modelscope-cache
+mkdir -p /mnt/a/ljz/.tmp/lowaux-rdnet/tmp
+
+TMPDIR=/mnt/a/ljz/.tmp/lowaux-rdnet/tmp \
+conda run --no-capture-output -n xreflection \
+python -m pip install -U modelscope transformers accelerate
+```
+
+Download the ModelScope DINOv3 ViT-L/16 model used in local experiments:
+
+```bash
+cd /mnt/a/ljz/DIP/lowaux-rdnet
+
+TMPDIR=/mnt/a/ljz/.tmp/lowaux-rdnet/tmp \
+MODELSCOPE_CACHE=/mnt/a/ljz/.tmp/lowaux-rdnet/modelscope-cache \
+conda run --no-capture-output -n xreflection \
+python - <<'PY'
+from modelscope.hub.snapshot_download import snapshot_download
+
+model_dir = snapshot_download(
+    model_id="facebook/dinov3-vitl16-pretrain-lvd1689m",
+    cache_dir="/mnt/a/ljz/.tmp/lowaux-rdnet/modelscope-cache",
+)
+print("DINO_MODEL_PATH=" + model_dir)
+PY
+```
+
+Export the printed path before training:
 
 ```bash
 export DINO_MODEL_PATH=/mnt/a/ljz/.tmp/lowaux-rdnet/modelscope-cache/models/facebook--dinov3-vitl16-pretrain-lvd1689m/snapshots/master
